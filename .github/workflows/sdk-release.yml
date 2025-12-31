@@ -1,0 +1,93 @@
+name: Kyra SDK Release
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+jobs:
+  build:
+    name: Build SDK (${{ matrix.os }} - ${{
+      matrix.arch }})
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            goos: linux
+            arch: amd64
+            ext: ""
+          - os: ubuntu-latest
+            goos: linux
+            arch: arm64
+            ext: ""
+          - os: windows-latest
+            goos: windows
+            arch: amd64
+            ext: ".exe"
+          - os: macos-latest
+            goos: darwin
+            arch: arm64
+            ext: ""
+          - os: macos-latest
+            goos: darwin
+            arch: amd64
+            ext: ""
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.22"
+
+      - name: Build kyra (runtime)
+        run: |
+          GOOS=${{ matrix.goos }} GOARCH=${{ matrix.arch }} \
+          go build -o kyra-${{ matrix.goos }}-${{ matrix.arch }}${{ matrix.ext }} ./cmd/kyra
+
+      - name: Build kyrac (compiler)
+        run: |
+          GOOS=${{ matrix.goos }} GOARCH=${{ matrix.arch }} \
+          go build -o kyrac-${{ matrix.goos }}-${{ matrix.arch }}${{ matrix.ext }} ./cmd/kyrac
+
+      - name: Package SDK
+        run: |
+          mkdir sdk
+          mv kyra-* sdk/
+          mv kyrac-* sdk/
+
+          if [[ "${{ matrix.goos }}" == "windows" ]]; then
+            zip -r kyra-sdk-${{ github.ref_name }}-${{ matrix.goos }}-${{ matrix.arch }}.zip sdk
+          else
+            tar -czf kyra-sdk-${{ github.ref_name }}-${{ matrix.goos }}-${{ matrix.arch }}.tar.gz sdk
+          fi
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: kyra-sdk-${{ matrix.goos }}-${{ matrix.arch }}
+          path: |
+            *.zip
+            *.tar.gz
+
+  release:
+    name: Publish Release
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: artifacts/**/*
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
