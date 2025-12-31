@@ -1,0 +1,26 @@
+def buffer_new():
+    return ""
+
+def buffer_write(buf, data):
+    return buf + data
+
+def buffer_read(buf, n):
+    out = ""
+    i = 0
+    while i < n and i < len(buf):
+        out = out + buf[i]
+        i = i + 1
+    return out
+
+def buffer_skip(buf, n):
+    if n >= len(buf):
+        return ""
+    out = ""
+    i = n
+    while i < len(buf):
+        out = out + buf[i]
+        i = i + 1
+    return out
+
+def buffer_read_all(buf):
+    return buf
