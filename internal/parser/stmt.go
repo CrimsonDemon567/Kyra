@@ -1,7 +1,6 @@
 package parser
 
 import (
-	"fmt"
 	"kyra/internal/lexer"
 )
 
@@ -94,11 +93,6 @@ func parseWhileStmt(p *Parser) Stmt {
 func parseForStmt(p *Parser) Stmt {
 	p.expect(lexer.K_FOR, "for")
 
-	// Syntax:
-	// for i 10
-	// for i range
-	// for i expr
-
 	varName := p.expect(lexer.IDENT, "loop variable").Lexeme
 
 	limit := p.parseExpression()
@@ -131,7 +125,6 @@ func parseForStmt(p *Parser) Stmt {
 func parseIndentedBlock(p *Parser) []Stmt {
 	stmts := []Stmt{}
 
-	// Expect INDENT
 	if !p.match(lexer.INDENT) {
 		panic("Expected INDENT after ':'")
 	}
