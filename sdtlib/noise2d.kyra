@@ -1,0 +1,42 @@
+def fade(t):
+    return t*t*t*(t*(t*6 - 15) + 10)
+
+def lerp(a, b, t):
+    return a + (b - a) * t
+
+def hash(x, y):
+    return ((x * 1619) ^ (y * 31337) ^ (x >> 1)) % 255
+
+def grad(h, x, y):
+    if h % 4 == 0:
+        return x + y
+    if h % 4 == 1:
+        return x - y
+    if h % 4 == 2:
+        return -x + y
+    return -x - y
+
+def noise(x, y):
+    xi = floor(x)
+    yi = floor(y)
+
+    xf = x - xi
+    yf = y - yi
+
+    h00 = hash(xi, yi)
+    h10 = hash(xi+1, yi)
+    h01 = hash(xi, yi+1)
+    h11 = hash(xi+1, yi+1)
+
+    g00 = grad(h00, xf, yf)
+    g10 = grad(h10, xf-1, yf)
+    g01 = grad(h01, xf, yf-1)
+    g11 = grad(h11, xf-1, yf-1)
+
+    u = fade(xf)
+    v = fade(yf)
+
+    nx0 = lerp(g00, g10, u)
+    nx1 = lerp(g01, g11, u)
+
+    return lerp(nx0, nx1, v)
