@@ -11,8 +11,8 @@ import (
 // ---------------------------
 
 type Function struct {
-	Chunk    []byte
-	Consts   []interface{}
+	Chunk  []byte
+	Consts []interface{}
 }
 
 // Global function table
@@ -63,7 +63,6 @@ func LoadFunctionsFromModule(code []byte) {
 
 func decodeChunk(code []byte) (*Function, int) {
 	offset := 0
-	buf := make([]byte, 4)
 
 	// Constants
 	cCount := int(binary.LittleEndian.Uint32(code[offset:]))
