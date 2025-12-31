@@ -1,0 +1,104 @@
+# -----------------------------------------
+# Packet Object
+# -----------------------------------------
+
+def packet():
+    return {
+        "data": []
+    }
+
+# -----------------------------------------
+# Write Primitives
+# -----------------------------------------
+
+def write_int(p, v):
+    # store as 32-bit signed
+    p["data"].append((v >> 24) & 0xFF)
+    p["data"].append((v >> 16) & 0xFF)
+    p["data"].append((v >> 8) & 0xFF)
+    p["data"].append(v & 0xFF)
+
+def write_byte(p, v):
+    p["data"].append(v & 0xFF)
+
+def write_bool(p, v):
+    if v:
+        p["data"].append(1)
+    else:
+        p["data"].append(0)
+
+def write_string(p, s):
+    # length prefix
+    write_int(p, len(s))
+    i = 0
+    while i < len(s):
+        p["data"].append(ord(s[i]) & 0xFF)
+        i = i + 1
+
+# -----------------------------------------
+# Read Cursor
+# -----------------------------------------
+
+def cursor(p):
+    return {
+        "p": p,
+        "i": 0
+    }
+
+# -----------------------------------------
+# Read Primitives
+# -----------------------------------------
+
+def read_int(c):
+    d = c["p"]["data"]
+    i = c["i"]
+
+    v = (d[i] << 24) |
+        (d[i+1] << 16) |
+        (d[i+2] << 8) |
+        d[i+3]
+
+    c["i"] = i + 4
+    return v
+
+def read_byte(c):
+    v = c["p"]["data"][c["i"]]
+    c["i"] = c["i"] + 1
+    return v
+
+def read_bool(c):
+    return read_byte(c) == 1
+
+def read_string(c):
+    length = read_int(c)
+    out = ""
+    j = 0
+    while j < length:
+        out = out + chr(read_byte(c))
+        j = j + 1
+    return out
+
+# -----------------------------------------
+# Utility: Checksum
+# -----------------------------------------
+
+def checksum(p):
+    d = p["data"]
+    s = 0
+    i = 0
+    while i < len(d):
+        s = (s + d[i]) & 0xFFFF
+        i = i + 1
+    return s
+
+# -----------------------------------------
+# Utility: Clone
+# -----------------------------------------
+
+def clone(p):
+    out = packet()
+    i = 0
+    while i < len(p["data"]):
+        out["data"].append(p["data"][i])
+        i = i + 1
+    return out
