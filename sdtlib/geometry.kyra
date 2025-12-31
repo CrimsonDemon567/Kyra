@@ -1,25 +1,77 @@
+# ---------------------------
+# Distance
+# ---------------------------
+
 def distance(x1, y1, x2, y2):
     dx = x2 - x1
     dy = y2 - y1
-    return sqrt(dx*dx + dy*dy)
+    return sqrt(dx * dx + dy * dy)
 
-def angle(x1, y1, x2, y2):
+# ---------------------------
+# Point-Line Distance
+# ---------------------------
+
+def distance_point_line(px, py, x1, y1, x2, y2):
+    # Line length squared
     dx = x2 - x1
     dy = y2 - y1
-    return atan2(dy, dx)
+    l2 = dx * dx + dy * dy
 
-def inside_circle(px, py, cx, cy, r):
-    dx = px - cx
-    dy = py - cy
-    return dx*dx + dy*dy <= r*r
+    if l2 == 0:
+        return distance(px, py, x1, y1)
 
-def inside_rect(px, py, x, y, w, h):
-    if px < x:
-        return false
-    if px > x + w:
-        return false
-    if py < y:
-        return false
-    if py > y + h:
-        return false
-    return true
+    # Projection factor t
+    t = ((px - x1) * dx + (py - y1) * dy) / l2
+
+    if t < 0:
+        return distance(px, py, x1, y1)
+    if t > 1:
+        return distance(px, py, x2, y2)
+
+    # Projection point
+    projx = x1 + t * dx
+    projy = y1 + t * dy
+
+    return distance(px, py, projx, projy)
+
+# ---------------------------
+# Triangle Area
+# ---------------------------
+
+def triangle_area(x1, y1, x2, y2, x3, y3):
+    return abs(
+        x1 * (y2 - y3) +
+        x2 * (y3 - y1) +
+        x3 * (y1 - y2)
+    ) / 2
+
+# ---------------------------
+# Point in Triangle
+# ---------------------------
+
+def point_in_triangle(px, py, x1, y1, x2, y2, x3, y3):
+    a = triangle_area(x1, y1, x2, y2, x3, y3)
+    a1 = triangle_area(px, py, x2, y2, x3, y3)
+    a2 = triangle_area(x1, y1, px, py, x3, y3)
+    a3 = triangle_area(x1, y1, x2, y2, px, py)
+
+    return abs(a - (a1 + a2 + a3)) < 0.00001
+
+# ---------------------------
+# Circle Collision
+# ---------------------------
+
+def circle_intersect(x1, y1, r1, x2, y2, r2):
+    return distance(x1, y1, x2, y2) <= (r1 + r2)
+
+# ---------------------------
+# Rectangle Collision (AABB)
+# ---------------------------
+
+def rect_intersect(ax, ay, aw, ah, bx, by, bw, bh):
+    return not (
+        ax + aw < bx or
+        ax > bx + bw or
+        ay + ah < by or
+        ay > by + bh
+    )
