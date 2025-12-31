@@ -23,48 +23,59 @@ func RunCLI(args []string) {
 		return
 	}
 
+	exe := filepath.Base(args[0])
 	flag := args[1]
 
-	switch flag {
+	switch exe {
 
 	// --------------------------------------------------------
-	// COMPILER FLAGS (kyrac)
+	// COMPILER: kyrac
 	// --------------------------------------------------------
-	case "-kbc":
-		// kyrac -kbc file.kyra  → compile only
-		if isCompiler(args[0]) {
+	case "kyrac":
+		switch flag {
+
+		case "-kbc":
+			// kyrac -kbc file.kyra → nur kompilieren
 			buildKBC(args[2])
 			return
-		}
 
-		// kyra -kbc file.kyra → compile + run
-		runKBC(args[2])
-		return
-
-	case "-kar":
-		// kyrac -kar folder → build archive
-		if isCompiler(args[0]) {
+		case "-kar":
+			// kyrac -kar folder → kompilieren + archiv bauen
 			buildKAR(args[2])
+			return
+
+		default:
+			fmt.Println("Unknown flag:", flag)
+			usageCompiler()
 			return
 		}
 
-		// kyra -kar file.kar → run archive
-		runKAR(args[2])
-		return
+	// --------------------------------------------------------
+	// RUNTIME: kyra
+	// --------------------------------------------------------
+	case "kyra":
+		switch flag {
+
+		case "-kbc":
+			// kyra -kbc file.kbc → nur ausführen
+			runKBC(args[2])
+			return
+
+		case "-kar":
+			// kyra -kar file.kar → archiv ausführen
+			runKAR(args[2])
+			return
+
+		default:
+			fmt.Println("Unknown flag:", flag)
+			usageRuntime()
+			return
+		}
 
 	default:
-		fmt.Println("Unknown flag:", flag)
+		fmt.Println("Unknown executable:", exe)
 		usage()
 	}
-}
-
-// ------------------------------------------------------------
-// Detect compiler binary
-// ------------------------------------------------------------
-
-func isCompiler(exe string) bool {
-	base := filepath.Base(exe)
-	return base == "kyrac"
 }
 
 // ------------------------------------------------------------
@@ -74,13 +85,20 @@ func isCompiler(exe string) bool {
 func usage() {
 	fmt.Println("Kyra Toolchain")
 	fmt.Println("")
+	usageCompiler()
+	usageRuntime()
+}
+
+func usageCompiler() {
 	fmt.Println("Compiler (kyrac):")
 	fmt.Println("  kyrac -kbc <file.kyra>   Compile a single Kyra file into .kbc")
-	fmt.Println("  kyrac -kar <folder>      Build a .kar archive from a folder")
-	fmt.Println("")
+	fmt.Println("  kyrac -kar <folder>      Compile folder and build .kar archive")
+}
+
+func usageRuntime() {
 	fmt.Println("Runtime (kyra):")
-	fmt.Println("  kyra -kbc <file.kyra>    Compile and execute a single Kyra file")
-	fmt.Println("  kyra -kar <file.kar>     Execute a Kyra .kar archive")
+	fmt.Println("  kyra -kbc <file.kbc>     Execute a compiled Kyra bytecode file")
+	fmt.Println("  kyra -kar <file.kar>     Execute a Kyra archive")
 }
 
 // ------------------------------------------------------------
@@ -137,22 +155,15 @@ func buildKAR(folder string) {
 // ------------------------------------------------------------
 
 func runKBC(path string) {
-	src, err := os.ReadFile(path)
+	data, err := os.ReadFile(path)
 	if err != nil {
-		fmt.Println("Error reading file:", err)
+		fmt.Println("Error reading .kbc:", err)
 		return
 	}
 
-	tokens := lexer.New(string(src)).Lex()
-	p := parser.New(tokens)
-	ast := p.Parse()
+	kvm.LoadFunctionsFromModule(data)
 
-	bytecode.ResetFunctions()
-	code := bytecode.Emit(ast)
-
-	kvm.LoadFunctionsFromModule(code)
-
-	vm := kvm.New(code)
+	vm := kvm.New(data)
 	result := vm.Run()
 
 	if result != nil {
@@ -167,7 +178,7 @@ func runKBC(path string) {
 func runKAR(path string) {
 	data, err := os.ReadFile(path)
 	if err != nil {
-		fmt.Println("Error reading KAR:", err)
+		fmt.Println("Error reading .kar:", err)
 		return
 	}
 
@@ -184,6 +195,7 @@ func runKAR(path string) {
 	}
 
 	kvm.LoadFunctionsFromModule(main)
+
 	vm := kvm.New(main)
 	result := vm.Run()
 
