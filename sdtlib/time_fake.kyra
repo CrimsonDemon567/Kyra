@@ -1,16 +1,11 @@
-let _time = 0.0
+let _time = 0
 
-def tick(dt):
-    _time = _time + dt
-    return _time
+func time() { return _time }
 
-funk now() { return _time }
+func set_time(t) { _time = t }
 
-def since(t):
-    return _time - t
-
-def timer():
-    return _time
+func tick(dt) { _time = _time + dt }
 
 def sleep(dt):
+    # Fake sleep: einfach Zeit erhöhen
     _time = _time + dt
