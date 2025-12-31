@@ -1,0 +1,77 @@
+def skip_ws(s, i):
+    while i < len(s) and (s[i] == " " or s[i] == "\n" or s[i] == "\t"):
+        i = i + 1
+    return i
+
+def parse_value(s, i):
+    i = skip_ws(s, i)
+    c = s[i]
+
+    if c == "\"":
+        return parse_string(s, i)
+    if c == "t":
+        return true, i + 4
+    if c == "f":
+        return false, i + 5
+    if c == "n":
+        return null, i + 4
+    if c == "[":
+        return parse_array(s, i)
+    if c == "{":
+        return parse_object(s, i)
+
+    return parse_number(s, i)
+
+def parse_string(s, i):
+    i = i + 1
+    out = ""
+    while s[i] != "\"":
+        out = out + s[i]
+        i = i + 1
+    return out, i + 1
+
+def parse_number(s, i):
+    out = ""
+    while i < len(s) and s[i] != "," and s[i] != "]" and s[i] != "}" and s[i] != " ":
+        out = out + s[i]
+        i = i + 1
+    return parseFloat(out), i
+
+def parse_array(s, i):
+    arr = 0
+    i = i + 1
+    i = skip_ws(s, i)
+
+    if s[i] == "]":
+        return arr, i + 1
+
+    while true:
+        v, i = parse_value(s, i)
+        arr = (v, arr)
+        i = skip_ws(s, i)
+        if s[i] == "]":
+            return arr, i + 1
+        i = i + 1
+
+def parse_object(s, i):
+    obj = 0
+    i = i + 1
+    i = skip_ws(s, i)
+
+    if s[i] == "}":
+        return obj, i + 1
+
+    while true:
+        key, i = parse_string(s, i)
+        i = skip_ws(s, i)
+        i = i + 1
+        val, i = parse_value(s, i)
+        obj = (key, val, obj)
+        i = skip_ws(s, i)
+        if s[i] == "}":
+            return obj, i + 1
+        i = i + 1
+
+def parse_json(s):
+    v, _ = parse_value(s, 0)
+    return v
