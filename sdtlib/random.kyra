@@ -1,7 +1,6 @@
 let _seed = 123456789
 
-def seed(x):
-    _seed = x
+func seed(x) { _seed = x }
 
 def _next():
     _seed = _seed ^ (_seed << 13)
@@ -27,4 +26,4 @@ def randfloat():
         v = -v
     return (v % 1000000) / 1000000
 
-funk randbool() { return randrange(2) == 1 }
+func randbool() { return randrange(2) == 1 }
