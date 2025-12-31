@@ -1,0 +1,148 @@
+# -----------------------------------------
+# Network Simulation Layer
+# -----------------------------------------
+
+def network():
+    return {
+        "servers": {},     # name -> server object
+        "clients": {},     # name -> client object
+        "messages": []     # queued packets
+    }
+
+# -----------------------------------------
+# Create Server
+# -----------------------------------------
+
+def create_server(net, name):
+    net["servers"][name] = {
+        "name": name,
+        "clients": []
+    }
+
+# -----------------------------------------
+# Create Client
+# -----------------------------------------
+
+def create_client(net, name):
+    net["clients"][name] = {
+        "name": name,
+        "server": "",
+        "inbox": []
+    }
+
+# -----------------------------------------
+# Connect Client to Server
+# -----------------------------------------
+
+def connect(net, client_name, server_name):
+    if not (client_name in net["clients"]):
+        return
+
+    if not (server_name in net["servers"]):
+        return
+
+    c = net["clients"][client_name]
+    s = net["servers"][server_name]
+
+    c["server"] = server_name
+    s["clients"].append(client_name)
+
+# -----------------------------------------
+# Internal Packet Structure
+# -----------------------------------------
+
+def _packet(src, dst, payload, delay):
+    return {
+        "src": src,
+        "dst": dst,
+        "payload": payload,
+        "delay": delay
+    }
+
+# -----------------------------------------
+# Send Message (Client → Server)
+# -----------------------------------------
+
+def send_to_server(net, client_name, payload, latency):
+    c = net["clients"][client_name]
+    if c["server"] == "":
+        return
+
+    p = _packet(client_name, c["server"], payload, latency)
+    net["messages"].append(p)
+
+# -----------------------------------------
+# Send Message (Server → Client)
+# -----------------------------------------
+
+def send_to_client(net, server_name, client_name, payload, latency):
+    p = _packet(server_name, client_name, payload, latency)
+    net["messages"].append(p)
+
+# -----------------------------------------
+# Broadcast (Server → All Clients)
+# -----------------------------------------
+
+def broadcast(net, server_name, payload, latency):
+    s = net["servers"][server_name]
+    i = 0
+    while i < len(s["clients"]):
+        client = s["clients"][i]
+        p = _packet(server_name, client, payload, latency)
+        net["messages"].append(p)
+        i = i + 1
+
+# -----------------------------------------
+# Tick Network (process latency)
+# -----------------------------------------
+
+def tick(net, dt):
+    i = 0
+    while i < len(net["messages"]):
+        pkt = net["messages"][i]
+        pkt["delay"] = pkt["delay"] - dt
+
+        if pkt["delay"] <= 0:
+            _deliver(net, pkt)
+            net["messages"].remove_at(i)
+        else:
+            i = i + 1
+
+# -----------------------------------------
+# Deliver Packet
+# -----------------------------------------
+
+def _deliver(net, pkt):
+    dst = pkt["dst"]
+
+    # Deliver to server
+    if dst in net["servers"]:
+        # Servers don't have inboxes; user handles logic externally
+        return
+
+    # Deliver to client
+    if dst in net["clients"]:
+        net["clients"][dst]["inbox"].append({
+            "from": pkt["src"],
+            "data": pkt["payload"]
+        })
+
+# -----------------------------------------
+# Receive Messages (Client)
+# -----------------------------------------
+
+def recv(net, client_name):
+    c = net["clients"][client_name]
+    msgs = c["inbox"]
+
+    # Copy
+    out = []
+    i = 0
+    while i < len(msgs):
+        out.append(msgs[i])
+        i = i + 1
+
+    # Clear inbox
+    c["inbox"] = []
+
+    return out
