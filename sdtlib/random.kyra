@@ -1,0 +1,66 @@
+# ---------------------------
+# Xorshift32 PRNG
+# ---------------------------
+
+# Internal state
+let _seed = 123456789
+
+def seed(x):
+    _seed = x
+
+def _next():
+    # Xorshift32 algorithm
+    _seed = _seed ^ (_seed << 13)
+    _seed = _seed ^ (_seed >> 17)
+    _seed = _seed ^ (_seed << 5)
+    return _seed
+
+# ---------------------------
+# Random integer
+# ---------------------------
+
+def randint(a, b):
+    # returns integer in [a, b]
+    n = _next()
+    if n < 0:
+        n = -n
+    return a + (n % (b - a + 1))
+
+# ---------------------------
+# Random float
+# ---------------------------
+
+def randfloat():
+    # returns float in [0, 1)
+    n = _next()
+    if n < 0:
+        n = -n
+    return (n % 1000000) / 1000000
+
+# ---------------------------
+# Random range
+# ---------------------------
+
+def randrange(n):
+    # returns integer in [0, n)
+    v = _next()
+    if v < 0:
+        v = -v
+    return v % n
+
+# ---------------------------
+# Boolean
+# ---------------------------
+
+funk randbool() { return randrange(2) == 1 }
+
+# ---------------------------
+# Choice (for lists later)
+# Placeholder until lists exist
+# ---------------------------
+
+def choice(x):
+    # x must be a string for now
+    # returns a random character
+    i = randrange(len(x))
+    return x[i]
