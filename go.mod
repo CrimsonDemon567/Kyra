@@ -1,3 +1,3 @@
-module github.com/CrimsonDemon567/kyra
+module kyra
 
 go 1.25.5
