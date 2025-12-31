@@ -12,9 +12,9 @@ import (
 // ---------------------------
 
 type Function struct {
-	Name   string
-	Args   []parser.FuncArg
-	Chunk  *Chunk
+	Name  string
+	Args  []parser.FuncArg
+	Chunk *Chunk
 }
 
 var functionTable []*Function
@@ -35,18 +35,15 @@ func addFunction(fn *Function) int {
 func emitFunctionDef(parent *Chunk, fn *parser.FuncDef) {
 	ch := NewChunk()
 
-	// Arguments become local variables
 	for _, arg := range fn.Args {
 		slot := ch.addConst(arg.Name)
 		ch.Names[arg.Name] = slot
 	}
 
-	// Emit body
 	for _, st := range fn.Body {
 		emitStmt(ch, st)
 	}
 
-	// Ensure return
 	ch.emit(OP_RET)
 
 	fnID := addFunction(&Function{
@@ -55,7 +52,6 @@ func emitFunctionDef(parent *Chunk, fn *parser.FuncDef) {
 		Chunk: ch,
 	})
 
-	// Store function reference in parent chunk
 	slot := parent.addConst(fnID)
 	parent.emit(OP_CONST)
 	parent.emitInt(slot)
@@ -109,52 +105,47 @@ func emitFunctionOneLiner(parent *Chunk, fn *parser.FuncOneLiner) {
 }
 
 // ---------------------------
-// Extend emitStmt to support functions
+// Register function emitters
 // ---------------------------
 
 func init() {
-	// Monkey‑patch emitStmt by wrapping the original
-	origEmitStmt := emitStmt
-
-	emitStmt = func(c *Chunk, stmt parser.Stmt) {
+	RegisterStmtEmitter(func(c *Chunk, stmt parser.Stmt) bool {
 		switch s := stmt.(type) {
 
 		case *parser.FuncDef:
 			emitFunctionDef(c, s)
+			return true
 
 		case *parser.FuncExprDef:
 			emitFunctionExpr(c, s)
+			return true
 
 		case *parser.FuncOneLiner:
 			emitFunctionOneLiner(c, s)
-
-		default:
-			origEmitStmt(c, stmt)
+			return true
 		}
-	}
+
+		return false
+	})
 }
 
 // ---------------------------
 // Encode full module with functions
 // ---------------------------
 
-func encodeModule(chunk *Chunk) []byte {
+func encodeModuleWithFunctions(chunk *Chunk) []byte {
 	out := []byte{}
 
-	// Header
 	out = append(out, 'K', 'B', 'C', 2)
 
-	// Write function count
 	buf := make([]byte, 4)
 	binary.LittleEndian.PutUint32(buf, uint32(len(functionTable)))
 	out = append(out, buf...)
 
-	// Encode each function chunk
 	for _, fn := range functionTable {
 		out = append(out, encodeChunk(fn.Chunk)...)
 	}
 
-	// Encode main chunk
 	out = append(out, encodeChunk(chunk)...)
 
 	return out
@@ -164,7 +155,6 @@ func encodeChunk(c *Chunk) []byte {
 	out := []byte{}
 	buf := make([]byte, 4)
 
-	// Constants
 	binary.LittleEndian.PutUint32(buf, uint32(len(c.Constants)))
 	out = append(out, buf...)
 
@@ -193,7 +183,6 @@ func encodeChunk(c *Chunk) []byte {
 		}
 	}
 
-	// Code
 	binary.LittleEndian.PutUint32(buf, uint32(len(c.Code)))
 	out = append(out, buf...)
 	out = append(out, c.Code...)
