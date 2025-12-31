@@ -1,0 +1,97 @@
+# -----------------------------------------
+# Simple Crypto / Hash / Token Utilities
+# -----------------------------------------
+
+def crypto():
+    return {
+        "seed": 1234567
+    }
+
+# -----------------------------------------
+# PRNG (deterministic)
+# -----------------------------------------
+
+def rand32(c):
+    c["seed"] = (c["seed"] * 1664525 + 1013904223) & 0xFFFFFFFF
+    return c["seed"]
+
+# -----------------------------------------
+# XOR Encryption
+# -----------------------------------------
+
+def xor_encrypt(data, key):
+    out = []
+    i = 0
+    j = 0
+    while i < len(data):
+        out.append(data[i] ^ key[j])
+        i = i + 1
+        j = j + 1
+        if j >= len(key):
+            j = 0
+    return out
+
+def xor_decrypt(data, key):
+    # XOR decrypt = XOR encrypt
+    return xor_encrypt(data, key)
+
+# -----------------------------------------
+# Hash (FNV-1a 32-bit)
+# -----------------------------------------
+
+def hash32(text):
+    h = 2166136261
+    i = 0
+    while i < len(text):
+        h = h ^ ord(text[i])
+        h = (h * 16777619) & 0xFFFFFFFF
+        i = i + 1
+    return h
+
+# -----------------------------------------
+# Checksum (16-bit)
+# -----------------------------------------
+
+def checksum16(arr):
+    s = 0
+    i = 0
+    while i < len(arr):
+        s = (s + arr[i]) & 0xFFFF
+        i = i + 1
+    return s
+
+# -----------------------------------------
+# Generate Random Key
+# -----------------------------------------
+
+def random_key(c, length):
+    out = []
+    i = 0
+    while i < length:
+        out.append(rand32(c) & 0xFF)
+        i = i + 1
+    return out
+
+# -----------------------------------------
+# Generate Token (hex)
+# -----------------------------------------
+
+def token(c, length):
+    out = ""
+    i = 0
+    while i < length:
+        v = rand32(c) & 0xFF
+        hi = (v >> 4) & 0xF
+        lo = v & 0xF
+        out = out + _hex_digit(hi) + _hex_digit(lo)
+        i = i + 1
+    return out
+
+# -----------------------------------------
+# Internal: hex digit
+# -----------------------------------------
+
+def _hex_digit(v):
+    if v < 10:
+        return chr(ord("0") + v)
+    return chr(ord("a") + (v - 10))
