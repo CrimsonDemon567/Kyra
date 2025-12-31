@@ -1,0 +1,23 @@
+def integrate(x, y, vx, vy, ax, ay, dt):
+    vx = vx + ax * dt
+    vy = vy + ay * dt
+    x = x + vx * dt
+    y = y + vy * dt
+    return x, y, vx, vy
+
+def apply_drag(v, drag, dt):
+    return v * (1 - drag * dt)
+
+def collide_aabb(x1, y1, w1, h1, x2, y2, w2, h2):
+    if x1 > x2 + w2:
+        return false
+    if x2 > x1 + w1:
+        return false
+    if y1 > y2 + h2:
+        return false
+    if y2 > y1 + h1:
+        return false
+    return true
+
+def bounce(v, restitution):
+    return -v * restitution
