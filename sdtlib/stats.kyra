@@ -1,0 +1,22 @@
+def mean(a, b):
+    return (a + b) / 2
+
+def weighted_mean(a, b, wa, wb):
+    return (a * wa + b * wb) / (wa + wb)
+
+def clamp(x, lo, hi):
+    if x < lo:
+        return lo
+    if x > hi:
+        return hi
+    return x
+
+def map_range(x, a1, b1, a2, b2):
+    return a2 + (x - a1) * (b2 - a2) / (b1 - a1)
+
+def variance(a, b):
+    m = mean(a, b)
+    return ((a - m) * (a - m) + (b - m) * (b - m)) / 2
+
+def stddev(a, b):
+    return sqrt(variance(a, b))
