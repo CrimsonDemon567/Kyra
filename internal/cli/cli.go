@@ -9,7 +9,7 @@ import (
 	"kyra/internal/lexer"
 	"kyra/internal/parser"
 	"kyra/internal/bytecode"
-	"kyra/kvm"
+	"kyra/internal/kvm"
 	"kyra/internal/kar"
 )
 
